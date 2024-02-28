@@ -1,7 +1,7 @@
 %repeat (or start) calculation, status unknown
 setAppToStatus(-1, app);
 
-%% Tank dimensions, as per mechanical team, in meters
+%% Tank dimensions, as per mechanical team
 height = 2.4;
 width = 2.2;
 lengthOfElipsoidOnEnd = 0.4;
@@ -38,14 +38,10 @@ disp(totalVolume); %apparently it's around 23186.7 liters
 
 %Option 1 - liquid height
 if(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(1)))
-    liquidHeight = app.ValueEditField.Value/1000;
-    disp(liquidHeight);
+    liquidHeight = app.ChooseInputDropDown.Value/1000;
     %fantastic source - https://www.had2know.org/academics/ellipse-segment-tank-volume-calculator.html
-    firstTerm = acos(1-2*liquidHeight/height);
-    secondTerm = (1-2*liquidHeight/height)*sqrt(4*liquidHeight/height-4*(liquidHeight^2)/(height^2));
-    filledCylindricalVol = height/2*width/2*lengthOfCylindrical*(firstTerm - secondTerm);
-    filledEllipsoidVol = 0; %TODO
-    newVolume = (filledCylindricalVol + filledEllipsoidVol) *1000; %times 1000 for conversion into liters
+    firstTerm = acos(1-2*liquidHeight/height)
+    filledCylindricalVol = 
     
     
 %Option 2 - liquid volume
