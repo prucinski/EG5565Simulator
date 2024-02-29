@@ -31,7 +31,7 @@ else
     totalVolume = volumeOfCylindricalSection + volumeOfElipsoidSection;
     totalVolume = totalVolume * 1000; %conversion from m^3 to liters
 end
-disp(totalVolume); %apparently it's around 23186.7 liters
+
 %% Calculate the height of liquid based off of a height/volume input
 
 %TODO: Height is meant to be acquired from spectral data
@@ -44,16 +44,17 @@ if(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(1)))
     firstTerm = acos(1-2*liquidHeight/height);
     secondTerm = (1-2*liquidHeight/height)*sqrt(4*liquidHeight/height-4*(liquidHeight^2)/(height^2));
     filledCylindricalVol = height/2*width/2*lengthOfCylindrical*(firstTerm - secondTerm);
-    filledEllipsoidVol = 0; %TODO
+    %ellipsoid at tend: https://math.stackexchange.com/questions/1380958/
+    ellipsoidMultiplier = pi*lengthOfElipsoidOnEnd*width/2*liquidHeight^2/(3*(height/2)^2);
+    filledEllipsoidVol = ellipsoidMultiplier*(3*height/2-liquidHeight); 
     newVolume = (filledCylindricalVol + filledEllipsoidVol) *1000; %times 1000 for conversion into liters
-    
     
 %Option 2 - liquid volume
 elseif(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(2)))
     newVolume = app.ValueEditField.Value;
-
 end
-
+disp(['total volume of Tank:', num2str(totalVolume), ...
+    'current volume of Tank', num2str(newVolume)]); %apparently it's around 23186.7 liters
 %paste the new volume into the application
 app.VolumeGauge.Value = newVolume/totalVolume * 100;
 app.VolumelitersEditField.Value = newVolume;
