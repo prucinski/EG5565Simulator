@@ -2,6 +2,7 @@
 setAppToStatus(-1, app);
 
 %% Tank dimensions, as per mechanical team, in meters
+%TODO - it is unclear what happens if the user chooses "new tank" option
 height = 2.4;
 width = 2.2;
 lengthOfElipsoidOnEnd = 0.4;
@@ -54,7 +55,7 @@ elseif(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(2)))
     newVolume = app.ValueEditField.Value;
 end
 disp(['total volume of Tank:', num2str(totalVolume), ...
-    'current volume of Tank', num2str(newVolume)]); %apparently it's around 23186.7 liters
+    ', current volume of Tank', num2str(newVolume)]); %apparently it's around 23186.7 liters
 %paste the new volume into the application
 app.VolumeGauge.Value = newVolume/totalVolume * 100;
 app.VolumelitersEditField.Value = newVolume;
@@ -62,6 +63,12 @@ if(app.VolumeGauge.Value > 100)
    setAppToStatus(0, app); 
    errordlg('Volume levels above 100%','Volume Error');
 end
+
+%% Calculate the mass of the liquid
+density = app.SpecificGravityEditField.Value;
+mass = density * newVolume;
+app.TotalMasskgEditField.Value = mass;
+
 
 
 
