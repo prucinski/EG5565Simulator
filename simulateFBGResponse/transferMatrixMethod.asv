@@ -1,6 +1,0 @@
-%% Parameters
-core_refractive, n_1 = 1.47;        %just for reference of variables
-core_cladding, n_2 = 1.457;
-braggL = 1550;
-dNeff = 1e-4;
-
