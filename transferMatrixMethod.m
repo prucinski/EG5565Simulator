@@ -4,7 +4,7 @@ core_cladding = 1.457; n_2 = core_cladding;
 changeInRefractiveIndex = 1e-4; dNeff = changeInRefractiveIndex;
 gratingPeriod = 5.27214e-7; gratingP = gratingPeriod;
 braggL = getBraggWavelength(gratingP, core_refractive);         %m  
-gratingLength = 5*1e-3; L= gratingLength;                       %m       
+gratingLength = 15*1e-3; L= gratingLength;                       %m       
 
 %maximum N
 M = 2*n_1*gratingLength/braggL;
@@ -45,7 +45,7 @@ for currentL = currentLarray
     shouldBeOne = real(transmissivity)^2+ imag(transmissivity)^2 + real(reflectivity)^2+ imag(reflectivity)^2;  %all OK, distance from origin is 1
     R = k^2*sinh(y*L)^2/(dB^2*sinh(y*L)^2 + k^2*cosh(y*L)^2);
     %y_result(end+1) = R;    this has weird arifacts for some reason
-    y_result(end+1) = shouldBeOne;
+    y_result(end+1) = real(reflectivity)^2+ imag(reflectivity)^2;
 
     %TODO: figure out a way to make the spectrum from the reflectivity &
     %transmissivity values for each wavelength
