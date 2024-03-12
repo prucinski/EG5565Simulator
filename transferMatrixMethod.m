@@ -7,6 +7,7 @@ try
     gratingPeriod = app.GratingPeriodEditField.Value;                 %m
     gratingLength = app.GratingLengthEditField.Value;                 %m 
     photoelasticCoefficient = app.PeCoeffEditField.Value;
+    thermalExpansionCoefficient = app.ThermalCoeffEditField.Value;    %1/K
     strainInSection = app.StrainEditField.Value;
     dTemp = app.DTempEditField.Value;
 
@@ -18,7 +19,10 @@ catch
     gratingPeriod = 5.27214e-7;                   %m
     gratingLength = 10*1e-3;                      %m 
     photoelasticCoefficient = 0.215;
-    strainInSection = 0.001;
+    %the photoealastic coefficient can also be calculated from Eq 3 from
+    %here: https://link.springer.com/article/10.1007/BF02323100
+    thermalExpansionCoefficient = 2.6e-6;       %source - google made it up TODO
+    strainInSection = 0.0005;
     dTemp = 0;
 
 end
@@ -29,14 +33,19 @@ gratingP = gratingPeriod;
 L= gratingLength;  
 braggL = getBraggWavelength(gratingP, core_refractive);         %m  
 pe = photoelasticCoefficient;
+alpha = thermalExpansionCoefficient;
+dndT = 19*alpha*n_1; %in in silica, the change of refractive index because of temperature
+% accounts for 95% of the thermal response... Hence this goofy workaround
+% (paper 3). "trust me, Im an engineer"
 
 %maximum N
 M = 2*n_1*gratingLength/braggL;
 
 %paper1: https://ijcsi.org/papers/IJCSI-9-1-2-368-374.pdf
 %paper2:https://www.sciencedirect.com/science/article/pii/S235271101630022X
+%paper3: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=618377
 
-currentLarray = linspace(1.5494*1e-6,1.5506*1e-6,200);
+currentLarray = linspace(1.549*1e-6,1.551*1e-6,1000);
 y_result = zeros(1,200);
 j = 1;
 %% reference spectrum
@@ -75,26 +84,26 @@ for currentL = currentLarray
 end
 %% Plot the reference spectrum
 try
-plot(app.FBGRefGraph, currentLarray, y_result);
-xlim(app.UIAxes, [currentLarray(1) currentLarray(end)]);
-ylim(app.UIAxes, "auto");
+    plot(app.FBGRefGraph, currentLarray, y_result);
+    xlim(app.UIAxes, [currentLarray(1) currentLarray(end)]);
+    ylim(app.UIAxes, "auto");
+    textPosition = [0.95, 0.9]; % Adjust text position as needed
+    text(app.FBGRefGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength: %.2f nm', braggL*1e9), 'Units', 'Normalized', 'HorizontalAlignment', 'right');
 catch
-plot(currentLarray, y_result);
-%figure;
-%plot(currentLarray, currentLarray);
+    plot(currentLarray, y_result);
 end
 
 %% Now, the strained spectrum
 y_result_strained = zeros(1,200);
 j = 1;
 for currentL = currentLarray
-    %% Change induced by strain
-    %new grating period (eq 2, paper 2)
-    newGratingP = gratingP*(1 + (1 - pe)*strainInSection); 
-
-
-    B = 2*pi*core_refractive/currentL; %I'll come back to this later
-    dB = B - pi/newGratingP;        %TODO: This is different with strained
+    %% Change induced by strain & temperature
+    %new grating period (eq 2, paper 2 + eq3, paper3)
+    newGratingP = gratingP*(1 + (1 - pe)*strainInSection + (alpha +dndT/n_1)*dTemp); 
+    newN = n_1;
+    newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
+    B = 2*pi*core_refractive/currentL; 
+    dB = B - pi/newGratingP;        
     k = pi*dNeff/currentL;
     y = sqrt(k^2 - dB^2);
     N = 10;
@@ -119,12 +128,14 @@ end
 
 %% Plot the strained spectrum
 try
-plot(app.FBGStrainedGraph, currentLarray, y_result_strained);
-xlim(app.UIAxes, [currentLarray(1) currentLarray(end)]);
-ylim(app.UIAxes, "auto");
+    plot(app.FBGStrainedGraph, currentLarray, y_result_strained);
+    textPosition = [0.95, 0.9]; % Adjust text position as needed
+    text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength: %.2f nm', newBraggL*1e9), 'Units', 'Normalized', 'HorizontalAlignment', 'right');
+    xlim(app.UIAxes, [currentLarray(1) currentLarray(end)]);
+    ylim(app.UIAxes, "auto");
 catch
-figure;
-plot(currentLarray, y_result_strained);
+    figure;
+    plot(currentLarray, y_result_strained);
 end
 
 
