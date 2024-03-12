@@ -16,7 +16,7 @@ catch
     core_refractive = 1.47;
     core_cladding = 1.457;                             
     changeInRefractiveIndex = 1e-4;
-    gratingPeriod = 5.27214e-7;                   %m
+    gratingPeriod = 5.27212e-7;                   %m
     gratingLength = 10*1e-3;                      %m 
     photoelasticCoefficient = 0.215;
     %the photoealastic coefficient can also be calculated from Eq 3 from
