@@ -1,6 +1,7 @@
 %% Parameters
 %with app
 try
+    cla(app.FBGStrainedGraph);                         %clear the figure
     core_refractive = app.RefIndexEditField.Value;     %just for reference of variables
     core_cladding = app.CladdingIndexEditField.Value;                               
     changeInRefractiveIndex = app.DRefIndexEditField.Value; 
@@ -120,6 +121,15 @@ for currentL = currentLarray
     for i = 2:N
         T= T*T_i;
     end
+    transmissivity = 1/T(1,1);
+    reflectivity = T(2,1)/T(1,1);
+    y_result_strained(j) = real(reflectivity)^2+ imag(reflectivity)^2;
+    j= j+1;
+end
+newBraggL_strain = newBraggL;   %for plotting later
+y_result_temp = zeros(1,200);
+j = 1;
+for currentL = currentLarray 
     %% Change induced by only the temperature on the same fibre (no mechanical strain)
     newGratingP = gratingP*( 1 + (alpha +dndT/n_1)*dTemp); 
     newN = n_1; %note - there should be a change of the effective refractive index
@@ -136,26 +146,35 @@ for currentL = currentLarray
     T_22 = cosh(y*sectionL) + 1i*dB/y*sinh(y*sectionL);
     
     T_i = [T_11, T_12;T_21, T_22];
-    %Continue with results from previous part of the fibre
+    T = T_i;  %begin with T_1, then multiply by T_2, then T_3... 
     for i = 1:N
         T= T*T_i;
     end
     transmissivity = 1/T(1,1);
     reflectivity = T(2,1)/T(1,1);
-    y_result_strained(j) = real(reflectivity)^2+ imag(reflectivity)^2;
+    y_result_temp(j) = real(reflectivity)^2+ imag(reflectivity)^2;
     j= j+1;
 end
 
 %% Plot the strained spectrum
 try
+    hold(app.FBGStrainedGraph, 'on');
     plot(app.FBGStrainedGraph, currentLarray, y_result_strained);
+    plot(app.FBGStrainedGraph, currentLarray, y_result_temp);
     textPosition = [0.95, 0.9]; % Adjust text position as needed
-    text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength: %.2f nm', newBraggL*1e9), 'Units', 'Normalized', 'HorizontalAlignment', 'right');
+    text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength (temp/temp+strain): %.2f/%.2f nm', newBraggL*1e9, newBraggL_strain*1e9), ...
+        'Units', 'Normalized', 'HorizontalAlignment', 'right');
     xlim(app.UIAxes, [currentLarray(1) currentLarray(end)]);
     ylim(app.UIAxes, "auto");
+    hold(app.FBGStrainedGraph, 'off');
+    app.simulatedXResp = currentLarray;
+    app.simulatedYResp_strain = y_result_strained;
+    app.simulatedYResp_temp = y_result_temp;
 catch
     figure;
+    hold on;
     plot(currentLarray, y_result_strained);
+    plot(currentLarray, y_result_temp);
 end
 
 

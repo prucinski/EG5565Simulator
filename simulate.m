@@ -21,7 +21,7 @@ n = 1e-4;
 braggWavelength = getBraggWavelength(spacing, n);
 %braggWavelength = 1550;
 %add wavelength shift to the graph
-wavelengthShift = braggWavelength - app.peakWavelength;
+wavelengthShift = braggWavelength - app.peakWavelength*1e9;         %TODO: consistent across app
 %display in the graph
 textPosition = [0.95, 0.9]; % Adjust text position as needed
 text(app.UIAxes, textPosition(1), textPosition(2), sprintf('Wavelength shift: %.2f nm', wavelengthShift), 'Units', 'Normalized', 'HorizontalAlignment', 'right');
