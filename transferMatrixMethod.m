@@ -155,7 +155,7 @@ for currentL = currentLarray
     y_result_temp(j) = real(reflectivity)^2+ imag(reflectivity)^2;
     j= j+1;
 end
-
+%hello git
 %% Plot the strained spectrum
 try
     hold(app.FBGStrainedGraph, 'on');
