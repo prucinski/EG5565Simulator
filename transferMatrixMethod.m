@@ -27,6 +27,9 @@ catch
     dTemp = -5;
 
 end
+
+v_f = 0.17;              %Poisson's ratio of optical fiber - TODO - decide where this is defined
+
 n_1 = core_refractive;        %just for reference of variables
 n_2 = core_cladding;  
 dNeff = changeInRefractiveIndex;
@@ -35,9 +38,13 @@ L= gratingLength;
 braggL = getBraggWavelength(gratingP, core_refractive);         %m  
 pe = photoelasticCoefficient;
 alpha = thermalExpansionCoefficient;
+
+% other constants
 dndT = 19*alpha*n_1; %in in silica, the change of refractive index because of temperature
 % accounts for 95% of the thermal response... Hence this goofy workaround
 % (paper 3). "trust me, Im an engineer"
+p11 = 0.121;             %Pockel's constant
+p12 = 0.27;              %Pockel's constant
 
 %maximum N
 M = 2*n_1*gratingLength/braggL;
@@ -45,6 +52,15 @@ M = 2*n_1*gratingLength/braggL;
 %paper1: https://ijcsi.org/papers/IJCSI-9-1-2-368-374.pdf
 %paper2:https://www.sciencedirect.com/science/article/pii/S235271101630022X
 %paper3: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=618377
+
+%% Just checking something...
+k_e = 1 - 0.5*n_1^2*((1-v_f)*p12 - v_f*p11); 
+disp(['K_e: ', num2str(k_e), ' 1 - pe: ', num2str(1 - pe)]);    %A decision will have to be made which one to use for display to user to choose
+thermal_term = 1 - 0.5*n_1^2*(p11 + 2*p12);
+disp(thermal_term);
+disp(['K_t with: ', num2str(thermal_term*0.5*1e-6), ' Kt without: ', num2str(alpha)]);
+
+%% Continue on
 
 currentLarray = linspace(1.549*1e-6,1.551*1e-6,1000);
 y_result = zeros(1,200);
@@ -97,6 +113,11 @@ end
 %% Now, the strained spectrum 
 y_result_strained = zeros(1,200);
 j = 1;
+
+%TODO: Eq (6) from here https://www.mdpi.com/1424-8220/20/15/4223 
+%For measurement of the mechanical strain transferred from structure to
+%fibre
+
 for currentL = currentLarray 
     %% - change induced by strain & temperature
     %new grating period (eq 2, paper 2 + eq3, paper3)
