@@ -18,7 +18,7 @@ end
 %% Sensor design dimensions, as per electrical team - kind of TODO
 spacing = 5.27212e-7; 
 n = 1.47;
-braggWavelength = getBraggWavelength(spacing, n);   %1550 with arbitrary numbers
+braggWavelength = getBraggWavelength(spacing, n);   %1550 with this design
 manufacturingTemp = 20;
 %add wavelength shift to the graph
 wavelengthShift =  app.peakWavelength - braggWavelength;     
@@ -68,11 +68,16 @@ app.TotalMasskgEditField.Value = mass;
 
 %% Finally, retrieve information back from the two spectra
 
-%default parameters for the sensor that we install on the tank
-k_t = 0.00000966672079880952;       %This needs to be updated should the params for the simulation change
+%default parameters for the sensor that we install on the tank - might need
+%updating for whatever we end up going for.
+k_t = 0.00000966672079880952;    
+k_e = 0.780096011500;
 
 dT = wavelengthShiftRef/(k_t*braggWavelength);
 app.TemperatureEditField.Value = manufacturingTemp + dT;
+
+strain = (wavelengthShift - k_t*braggWavelength*dT)/(k_e*braggWavelength);
+app.FBGStrainEditField.Value = strain;
 
 
 

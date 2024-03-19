@@ -62,7 +62,7 @@ M = 2*n_1*gratingLength/braggL;
 
 %% Continue on
 
-currentLarray = linspace(1.549*1e-6,1.551*1e-6,1000);
+currentLarray = linspace(1.549*1e-6,1.551*1e-6,2000);
 y_result = zeros(1,200);
 j = 1;
 %% reference spectrum
