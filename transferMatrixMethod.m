@@ -7,7 +7,8 @@ try
     changeInRefractiveIndex = app.DRefIndexEditField.Value; 
     gratingPeriod = app.GratingPeriodEditField.Value;                 %m
     gratingLength = app.GratingLengthEditField.Value;                 %m 
-    photoelasticCoefficient = app.PeCoeffEditField.Value;
+    %photoelasticCoefficient = app.PeCoeffEditField.Value;
+    poissonsRatio = app.PeCoeffEditField.Value;
     thermalExpansionCoefficient = app.ThermalCoeffEditField.Value;    %1/K
     strainInSection = app.StrainEditField.Value;
     dTemp = app.DTempEditField.Value;
@@ -19,16 +20,17 @@ catch
     changeInRefractiveIndex = 1e-4;
     gratingPeriod = 5.27212e-7;                   %m
     gratingLength = 10*1e-3;                      %m 
-    photoelasticCoefficient = 0.215;
-    %the photoealastic coefficient can also be calculated from Eq 3 from
+    %photoelasticCoefficient = 0.215; %the photoealastic coefficient can also be calculated from Eq 3 from
     %here: https://link.springer.com/article/10.1007/BF02323100
-    thermalExpansionCoefficient = 2.6e-6;       %source - google made it up TODO
+    poissonsRatio = 0.17; 
+    thermalExpansionCoefficient = 0.5e-6;       %1/K
     strainInSection = 0.0005;
     dTemp = -5;
 
 end
 
-v_f = 0.17;              %Poisson's ratio of optical fiber - TODO - decide where this is defined
+v_f = poissonsRatio;
+%pe = photoelasticCoefficient;
 
 n_1 = core_refractive;        %just for reference of variables
 n_2 = core_cladding;  
@@ -36,15 +38,18 @@ dNeff = changeInRefractiveIndex;
 gratingP = gratingPeriod;
 L= gratingLength;  
 braggL = getBraggWavelength(gratingP, core_refractive);         %m  
-pe = photoelasticCoefficient;
+
 alpha = thermalExpansionCoefficient;
 
 % other constants
-dndT = 19*alpha*n_1; %in in silica, the change of refractive index because of temperature
-% accounts for 95% of the thermal response... Hence this goofy workaround
-% (paper 3). "trust me, Im an engineer"
-p11 = 0.121;             %Pockel's constant
+thermoOpticCoefficient = 1.4e-5;           %1/K TODO - user should be able to change
+p11 = 0.121;             %Pockel's constant (paper 4)
 p12 = 0.27;              %Pockel's constant
+
+k_e = 1 - 0.5*n_1^2*((1-v_f)*p12 - v_f*p11); 
+k_t = (1 - 0.5*n_1^2*(p11 + 2*p12))*alpha + thermoOpticCoefficient/n_1;
+
+disp(['K_e: ', sprintf('%.12f', k_e), ' k_t: ', sprintf('%.20f', k_t)]);
 
 %maximum N
 M = 2*n_1*gratingLength/braggL;
@@ -52,13 +57,8 @@ M = 2*n_1*gratingLength/braggL;
 %paper1: https://ijcsi.org/papers/IJCSI-9-1-2-368-374.pdf
 %paper2:https://www.sciencedirect.com/science/article/pii/S235271101630022X
 %paper3: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=618377
+%paper4: https://www.mdpi.com/1424-8220/20/15/4223 
 
-%% Just checking something...
-k_e = 1 - 0.5*n_1^2*((1-v_f)*p12 - v_f*p11); 
-disp(['K_e: ', num2str(k_e), ' 1 - pe: ', num2str(1 - pe)]);    %A decision will have to be made which one to use for display to user to choose
-thermal_term = 1 - 0.5*n_1^2*(p11 + 2*p12);
-disp(thermal_term);
-disp(['K_t with: ', num2str(thermal_term*0.5*1e-6), ' Kt without: ', num2str(alpha)]);
 
 %% Continue on
 
@@ -121,7 +121,7 @@ j = 1;
 for currentL = currentLarray 
     %% - change induced by strain & temperature
     %new grating period (eq 2, paper 2 + eq3, paper3)
-    newGratingP = gratingP*(1 + (1 - pe)*strainInSection + (alpha +dndT/n_1)*dTemp); 
+    newGratingP = gratingP*(1 + k_e*strainInSection + k_t*dTemp); 
     newN = n_1; %note - there should be a change of the effective refractive index
     newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
     B = 2*pi*core_refractive/currentL; 
@@ -152,7 +152,7 @@ y_result_temp = zeros(1,200);
 j = 1;
 for currentL = currentLarray 
     %% Change induced by only the temperature on the same fibre (no mechanical strain)
-    newGratingP = gratingP*( 1 + (alpha +dndT/n_1)*dTemp); 
+    newGratingP = gratingP*( 1 + k_t*dTemp); 
     newN = n_1; %note - there should be a change of the effective refractive index
     newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
     B = 2*pi*core_refractive/currentL; 

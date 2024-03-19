@@ -16,16 +16,16 @@ else
     lengthOfCylindrical = app.TotallLengthEditField.Value - 2*lengthOfElipsoidOnEnd;
 end
 %% Sensor design dimensions, as per electrical team - kind of TODO
-spacing = 7.75 * 1e-3; % mm * m
-n = 1e-4;
+spacing = 5.27212e-7; 
+n = 1.47;
 braggWavelength = getBraggWavelength(spacing, n);   %1550 with arbitrary numbers
 manufacturingTemp = 20;
 %add wavelength shift to the graph
-wavelengthShift = braggWavelength - app.peakWavelength;     
-wavelengthShiftRef = braggWavelength - app.peakRefWavelength;
+wavelengthShift =  app.peakWavelength - braggWavelength;     
+wavelengthShiftRef = app.peakRefWavelength - braggWavelength;
 %display in the graph
 textPosition = [0.95, 0.9]; % Adjust text position as needed
-text(app.UIAxes, textPosition(1), textPosition(2), sprintf('Shift (temp/temp+strain): %.2f/%.2f nm', wavelengthShift*1e9, wavelengthShiftRef*1e9), ...
+text(app.UIAxes, textPosition(1), textPosition(2), sprintf('Shift (temp/temp+strain): %.2f/%.2f nm', wavelengthShiftRef*1e9, wavelengthShift*1e9), ...
         'Units', 'Normalized', 'HorizontalAlignment', 'right');
 %% determine total volume of the tank first
 %ellipse surface area: minor axis * major axis * pi
@@ -68,6 +68,11 @@ app.TotalMasskgEditField.Value = mass;
 
 %% Finally, retrieve information back from the two spectra
 
+%default parameters for the sensor that we install on the tank
+k_t = 0.00000966672079880952;       %This needs to be updated should the params for the simulation change
+
+dT = wavelengthShiftRef/(k_t*braggWavelength);
+app.TemperatureEditField.Value = manufacturingTemp + dT;
 
 
 
