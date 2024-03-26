@@ -38,7 +38,6 @@ dNeff = changeInRefractiveIndex;
 gratingP = gratingPeriod;
 L= gratingLength;  
 braggL = getBraggWavelength(gratingP, core_refractive);         %m  
-
 alpha = thermalExpansionCoefficient;
 
 % other constants
@@ -62,7 +61,7 @@ M = 2*n_1*gratingLength/braggL;
 
 %% Continue on
 
-currentLarray = linspace(1.549*1e-6,1.551*1e-6,2000);
+currentLarray = linspace(braggL-1e-9,braggL+1e-9,2000);
 y_result = zeros(1,200);
 j = 1;
 %% reference spectrum
@@ -102,8 +101,8 @@ end
 %% Plot the reference spectrum
 try
     plot(app.FBGRefGraph, currentLarray, y_result);
-    xlim(app.UIAxes, [currentLarray(1) currentLarray(end)]);
-    ylim(app.UIAxes, "auto");
+    xlim(app.FBGRefGraph, [currentLarray(1) currentLarray(end)]);
+    ylim(app.FBGRefGraph, "auto");
     textPosition = [0.95, 0.9]; % Adjust text position as needed
     text(app.FBGRefGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength: %.2f nm', braggL*1e9), 'Units', 'Normalized', 'HorizontalAlignment', 'right');
 catch
@@ -185,8 +184,8 @@ try
     textPosition = [0.95, 0.9]; % Adjust text position as needed
     text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength (temp/temp+strain): %.2f/%.2f nm', newBraggL*1e9, newBraggL_strain*1e9), ...
         'Units', 'Normalized', 'HorizontalAlignment', 'right');
-    xlim(app.UIAxes, [currentLarray(1) currentLarray(end)]);
-    ylim(app.UIAxes, "auto");
+    xlim(app.FBGStrainedGraph, [currentLarray(1) currentLarray(end)]);
+    ylim(app.FBGStrainedGraph, "auto");
     hold(app.FBGStrainedGraph, 'off');
     app.simulatedXResp = currentLarray;
     app.simulatedYResp_strain = y_result_strained;
