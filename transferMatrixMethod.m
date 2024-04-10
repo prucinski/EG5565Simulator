@@ -37,7 +37,7 @@ n_2 = core_cladding;
 dNeff = changeInRefractiveIndex;
 gratingP = gratingPeriod;
 L= gratingLength;  
-braggL = getBraggWavelength(gratingP, core_refractive);         %m  
+braggL = getBraggWavelength(gratingP, n_1);         %m  
 alpha = thermalExpansionCoefficient;
 
 % other constants
@@ -67,7 +67,7 @@ j = 1;
 %% reference spectrum
 for currentL = currentLarray
     %% Equation for fiber propagation constant B and constants k and y (eq 12, paper1)
-    B = 2*pi*core_refractive/currentL;
+    B = 2*pi*n_1/currentL;
     dB = B - pi/gratingP;
     k = pi*dNeff/currentL;
     y = sqrt(k^2 - dB^2);
