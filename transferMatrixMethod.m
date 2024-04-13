@@ -1,7 +1,12 @@
 %% Parameters
-%with app
-try
+usingApp = -1;  %#ok<NASGU>                                        
+try %check if the script is being ran with app or without
     cla(app.FBGStrainedGraph);                         %clear the figure
+    usingApp = 1;
+catch
+    usingApp = 0;
+end
+if(usingApp == 1)
     core_refractive = app.RefIndexEditField.Value;     %just for reference of variables
     core_cladding = app.CladdingIndexEditField.Value;                               
     changeInRefractiveIndex = app.DRefIndexEditField.Value; 
@@ -14,7 +19,7 @@ try
     dTemp = app.DTempEditField.Value;
 
 %for using without the app
-catch   
+else 
     core_refractive = 1.47;
     core_cladding = 1.457;                             
     changeInRefractiveIndex = 1e-4;
@@ -99,13 +104,13 @@ for currentL = currentLarray
 
 end
 %% Plot the reference spectrum
-try
+if(usingApp)
     plot(app.FBGRefGraph, currentLarray, y_result);
     xlim(app.FBGRefGraph, [currentLarray(1) currentLarray(end)]);
     ylim(app.FBGRefGraph, "auto");
     textPosition = [0.95, 0.9]; % Adjust text position as needed
     text(app.FBGRefGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength: %.2f nm', braggL*1e9), 'Units', 'Normalized', 'HorizontalAlignment', 'right');
-catch
+else
     plot(currentLarray, y_result);
 end
 
@@ -175,9 +180,8 @@ for currentL = currentLarray
     y_result_temp(j) = real(reflectivity)^2+ imag(reflectivity)^2;
     j= j+1;
 end
-%hello git
 %% Plot the strained spectrum
-try
+if(usingApp)
     hold(app.FBGStrainedGraph, 'on');
     plot(app.FBGStrainedGraph, currentLarray, y_result_strained);
     plot(app.FBGStrainedGraph, currentLarray, y_result_temp);
@@ -190,7 +194,7 @@ try
     app.simulatedXResp = currentLarray;
     app.simulatedYResp_strain = y_result_strained;
     app.simulatedYResp_temp = y_result_temp;
-catch
+else
     figure;
     hold on;
     plot(currentLarray, y_result_strained);

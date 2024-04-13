@@ -38,17 +38,20 @@ totalVolume = totalVolume * 1000; %conversion from m^3 to liters
 
 %% Calculate the height of liquid based off of a height/volume input
 
-%TODO: Height is meant to be acquired from spectral data
-
+%LEGACY CODE
 %Option 1 - liquid height
-if(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(1)))
-    liquidHeight = app.ValueEditField.Value/1000;
-    newVolume =  getEllipsoidPartialVolume(liquidHeight, height, width, lengthOfCylindrical, lengthOfElipsoidOnEnd);
+%if(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(1)))
+%    liquidHeight = app.ValueEditField.Value/1000;
+%    newVolume =  getEllipsoidPartialVolume(liquidHeight, height, width, lengthOfCylindrical, lengthOfElipsoidOnEnd);
     
 %Option 2 - liquid volume
-elseif(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(2)))
-    newVolume = app.ValueEditField.Value;
-end
+%elseif(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(2)))
+%    newVolume = app.ValueEditField.Value;
+%end
+
+liquidHeight = app.ValueEditField.Value/1000;  %TODO: Height is meant to be acquired from spectral data
+newVolume =  getEllipsoidPartialVolume(liquidHeight, height, width, lengthOfCylindrical, lengthOfElipsoidOnEnd);
+
 disp(['total volume of Tank:', num2str(totalVolume), ...
     ', current volume of Tank', num2str(newVolume)]); %apparently it's around 23186.7 liters
 %paste the new volume into the application
