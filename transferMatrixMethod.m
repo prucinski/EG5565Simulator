@@ -1,5 +1,6 @@
 %% Parameters
-usingApp = -1;  %#ok<NASGU>                                        
+usingApp = -1;  %#ok<NASGU>   
+simpleMode = 1; %Are we using the complex model for strain % stress?
 try %check if the script is being ran with app or without
     cla(app.FBGStrainedGraph);                         %clear the figure
     usingApp = 1;
@@ -125,15 +126,21 @@ j = 1;
 for currentL = currentLarray 
     %% - change induced by strain & temperature
     %new grating period (eq 2, paper 2 + eq3, paper3)
-    newGratingP = gratingP*(1 + k_e*strainInSection + k_t*dTemp); 
+    N = 10;
+    sectionL = (2/3)*L/N;
+    if(simpleMode == 1)
+        newGratingP = gratingP*(1 + k_e*strainInSection + k_t*dTemp); 
+    else %we're using the complex method to infer the spectrum
+        [e_t, e_m] = getThermalAndMechanical(dTemp, strainInSection, sectionL*N, sectionL);
+        newGratingP = gratingP*(1 + k_e*(e_t + e_m) + k_t*dTemp);
+    end
     newN = n_1; %note - there should be a change of the effective refractive index
     newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
     B = 2*pi*core_refractive/currentL; 
     dB = B - pi/newGratingP;        
     k = pi*dNeff/currentL;
     y = sqrt(k^2 - dB^2);
-    N = 10;
-    sectionL = (2/3)*L/N;
+
     
     T_11 = cosh(y*sectionL) - 1i*dB/y*sinh(y*sectionL);
     T_12 = -1i*k/y*sinh(y*sectionL);
