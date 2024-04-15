@@ -1,6 +1,6 @@
 %% Parameters
 usingApp = -1;  %#ok<NASGU>   
-simpleMode = 1; %Are we using the complex model for strain % stress?
+simpleMode = 1;
 try %check if the script is being ran with app or without
     cla(app.FBGStrainedGraph);                         %clear the figure
     usingApp = 1;
@@ -8,6 +8,9 @@ catch
     usingApp = 0;
 end
 if(usingApp == 1)
+    if(app.AdvancedFBGmodelCheckBox.Value == true)
+        simpleMode = 0; %Are we using the complex model for strain % stress?
+    end
     core_refractive = app.RefIndexEditField.Value;     %just for reference of variables
     core_cladding = app.CladdingIndexEditField.Value;                               
     changeInRefractiveIndex = app.DRefIndexEditField.Value; 
@@ -127,15 +130,17 @@ for currentL = currentLarray
     %% - change induced by strain & temperature
     %new grating period (eq 2, paper 2 + eq3, paper3)
     %Check if we're using a strain file
-    if(app.StressResponseOK.Enable == true && usingApp)
-        %load the file only once
-        if(isempty(strainTable))   
-            strainTable = readtable(app.stressPath + "\" + app.stressFile);
-            N = height(strainTable);
-            disp(N);
+    if(usingApp)
+        if(app.StressResponseOK.Enable == true)
+            %load the file only once
+            if(isempty(strainTable))   
+                strainTable = readtable(app.stressPath + "\" + app.stressFile);
+                N = height(strainTable);
+                disp(N);
+            end
         end
     else
-        N = 10;
+      N = 10;
     end
     sectionL = (2/3)*L/N;
     for i = 2:N
