@@ -122,36 +122,51 @@ j = 1;
 %TODO: Eq (6) from here https://www.mdpi.com/1424-8220/20/15/4223 
 %For measurement of the mechanical strain transferred from structure to
 %fibre
-
+strainTable = {};
 for currentL = currentLarray 
     %% - change induced by strain & temperature
     %new grating period (eq 2, paper 2 + eq3, paper3)
-    N = 10;
-    sectionL = (2/3)*L/N;
-    if(simpleMode == 1)
-        newGratingP = gratingP*(1 + k_e*strainInSection + k_t*dTemp); 
-    else %we're using the complex method to infer the spectrum
-        [e_t, e_m] = getThermalAndMechanical(dTemp, strainInSection, sectionL*N, sectionL);
-        newGratingP = gratingP*(1 + k_e*(e_t + e_m) + k_t*dTemp);
+    %Check if we're using a strain file
+    if(app.StressResponseOK.Enable == true && usingApp)
+        %load the file only once
+        if(isempty(strainTable))   
+            strainTable = readtable(app.stressPath + "\" + app.stressFile);
+            N = height(strainTable);
+            disp(N);
+        end
+    else
+        N = 10;
     end
-    newN = n_1; %note - there should be a change of the effective refractive index
-    newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
-    B = 2*pi*core_refractive/currentL; 
-    dB = B - pi/newGratingP;        
-    k = pi*dNeff/currentL;
-    y = sqrt(k^2 - dB^2);
-
-    
-    T_11 = cosh(y*sectionL) - 1i*dB/y*sinh(y*sectionL);
-    T_12 = -1i*k/y*sinh(y*sectionL);
-    T_21 = 1i*k/y*sinh(y*sectionL);
-    T_22 = cosh(y*sectionL) + 1i*dB/y*sinh(y*sectionL);
-    
-    T_i = [T_11, T_12;T_21, T_22];
-    
-    T = T_i;  %begin with T_1, then multiply by T_2, then T_3... 
+    sectionL = (2/3)*L/N;
     for i = 2:N
-        T= T*T_i;
+        if(~isempty(strainTable))
+           strainInSection = strainTable{i, 5};    %access the strain value 
+        end    
+        if(simpleMode == 1)
+              newGratingP = gratingP*(1 + k_e*strainInSection + k_t*dTemp); 
+        else %we're using the complex method to infer the spectrum
+              [e_t, e_m] = getThermalAndMechanical(dTemp, strainInSection, sectionL*N, sectionL);
+              newGratingP = gratingP*(1 + k_e*(e_t + e_m) + k_t*dTemp);
+        end
+        newN = n_1; %note - there should be a change of the effective refractive index
+        newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
+        B = 2*pi*core_refractive/currentL; 
+        dB = B - pi/newGratingP;        
+        k = pi*dNeff/currentL;
+        y = sqrt(k^2 - dB^2);
+        T_11 = cosh(y*sectionL) - 1i*dB/y*sinh(y*sectionL);
+        T_12 = -1i*k/y*sinh(y*sectionL);
+        T_21 = 1i*k/y*sinh(y*sectionL);
+        T_22 = cosh(y*sectionL) + 1i*dB/y*sinh(y*sectionL);
+        T_i = [T_11, T_12;T_21, T_22];
+        if(i == 2)
+            T = T_i;  %begin with T_1, then multiply by T_2, then T_3... 
+            if(isempty(strainTable))
+               T= T*T_i; %For uniform sections it doesn't matter
+            end
+        else  
+            T= T*T_i;
+        end
     end
     transmissivity = 1/T(1,1);
     reflectivity = T(2,1)/T(1,1);

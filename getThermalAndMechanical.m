@@ -21,6 +21,7 @@ function [e_t, e_m] = getThermalAndMechanical(dT, strain, fiberL, sectionL)
     integralFunction = @(theta)  1./(r_p.*(1-sin(theta))./G_a+r_p./G_p.*log(r_p./r_f));
     term2 = integral(integralFunction, 0, acos(b_rp));
     lambdaTerm = sqrt(term1*term2);
+    disp(lambdaTerm);
     %% get thermal strain
     %This paper too: https://sensors.myu-group.co.jp/sm_pdf/SM1255.pdf
     %God knows the units they use... Nobody cares about reproducibility
@@ -31,5 +32,5 @@ function [e_t, e_m] = getThermalAndMechanical(dT, strain, fiberL, sectionL)
 
     %% get mechanical strain
     e_m = strain/term0*term_e2;
-    disp(e_m);
+    disp("Strain transferred " + e_m);
 end
