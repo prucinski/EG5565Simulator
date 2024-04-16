@@ -8,6 +8,7 @@ function [e_t, e_m] = getThermalAndMechanical(dT, strain, fiberL, sectionL,app)
 
     %this is a nasty-looking block for detection of errors in the table
     %tried my best to find a programatic solution but to no avail
+    %might chuck it into a separate function eventually
     try
       E_f = str2double(app.UITable.Data{1,2});
         if(isnan(E_f)) app.UITable.Data{1,1} = {'72'}; error('E_f is not a number');   end
@@ -56,7 +57,7 @@ function [e_t, e_m] = getThermalAndMechanical(dT, strain, fiberL, sectionL,app)
     G_p = G_p*1e-3;   %MPa to GPa
         
     %good explaination here too
-    
+
     %% get the lambda term (paper 4, eq 4)
     term0 = (pi*r_f^2/(2*h*r_p*E_h))+1/E_f;
     term1 = 2*r_p/(pi*r_f^2)*term0;
