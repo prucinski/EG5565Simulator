@@ -150,7 +150,7 @@ for currentL = currentLarray
         if(simpleMode == 1)
               newGratingP = gratingP*(1 + k_e*strainInSection + k_t*dTemp); 
         else %we're using the complex method to infer the spectrum
-              [e_t, e_m] = getThermalAndMechanical(dTemp, strainInSection, sectionL*N, sectionL);
+              [e_t, e_m] = getThermalAndMechanical(dTemp, strainInSection, sectionL*N, sectionL,app);
               newGratingP = gratingP*(1 + k_e*(e_t + e_m) + k_t*dTemp);
         end
         newN = n_1; %note - there should be a change of the effective refractive index
