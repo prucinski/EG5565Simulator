@@ -153,7 +153,9 @@ for currentL = currentLarray
            strainInSection = strainTable{i, 5};    %access the strain value 
         end    
         if(simpleMode == 1)
+              newN = n_1; %note - there should be a change of the effective refractive index  
               newGratingP = gratingP*(1 + k_e*strainInSection + k_t*dTemp); 
+               newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
         else %we're using the complex method to infer the spectrum
             if(i <= N/2) %we only need to do half of the spectrum, past the middle point it's symmetric
               [e_t, e_m] = getThermalAndMechanical(dTemp, strainInSection, sectionL*N, currentLengthFromBeginning,term0, lambdaTerm, E_f, a_h, a_f);
