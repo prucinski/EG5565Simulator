@@ -1,6 +1,6 @@
 function [] = uploadToCloud(key, secretID)
     accessKeyID = key;
-    sAccessKey = secretID; %also needs access key ID (which is answer{2}, only for testing purposes
+    sAccessKey = secretID;
     setenv("AWS_ACCESS_KEY_ID",accessKeyID);
     setenv("AWS_SECRET_ACCESS_KEY",sAccessKey);
     setenv("AWS_DEFAULT_REGION","eu-north-1");
@@ -26,8 +26,8 @@ function [] = uploadToCloud(key, secretID)
     newNameStrain = "strain_" + dateTimeAsStr +".csv";
     disp("Oldest temp file renamed to " + newNameRef + " and uploaded to the cloud");
     disp("Oldest strain file renamed to " + newNameStrain + " and uploaded to the cloud")
-    %writematrix(oldestFileRefTable, "s3://eg5565data/temp/" + newNameRef);
-     %writematrix(oldestFileRefTable, "s3://eg5565data/strain/" + newNameStrain);
+    writematrix(oldestFileRefTable, "s3://eg5565data/temp/" + newNameRef);
+    writematrix(oldestFileStrainTable, "s3://eg5565data/strain_temp/" + newNameStrain);
     %oldestFile_table =readtable(oldestFile);
 
 
