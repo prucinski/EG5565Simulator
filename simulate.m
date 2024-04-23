@@ -5,10 +5,10 @@ function [] = simulate(app)
     %% Tank dimensions, as per mechanical team, in meters
     %default tank
     if(app.NewTankCheckBox == false)  
-        height = 2.4;
-        width = 2.2;
-        lengthOfElipsoidOnEnd = 0.4;
-        lengthOfCylindrical = 5.858 - 2*lengthOfElipsoidOnEnd;
+        height = 2.6;
+        width = 2.4;
+        lengthOfElipsoidOnEnd = 1.05;
+        lengthOfCylindrical =6.058 - 2*lengthOfElipsoidOnEnd;
     %custom tank
     else
         height = app.HeightEditField.Value;
@@ -16,13 +16,24 @@ function [] = simulate(app)
         lengthOfElipsoidOnEnd = app.EllipsoidEndRadiusEditField.Value;
         lengthOfCylindrical = app.TotallLengthEditField.Value - 2*lengthOfElipsoidOnEnd;
     end
-    %% Sensor design dimensions, as per electrical team - kind of TODO
-    spacing = 5.27212e-7; 
-    n = 1.47;
-    braggWavelength = getBraggWavelength(spacing, n);   %1550 with this design
-    manufacturingTemp = 20;
+    %% Sensor design dimensions, as per the user input (defaults per our design)
+    [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, n_eff, g_period,to_c,ref_T, v_f] = getTermsFromTable(app);
+    %if using custom parameters:
+    if(app.CustomHSMparametersCheckBox.Value == true)
+        spacing = g_period*1e-6;         %convert from um to m; 
+        n = n_eff;
+        to_c = to_c*1e-6;  %convert from ue/K to e/K
+        a_f = a_f *1e-6;    %ue/K to e/K
+    %otherwise, we're using the same parameters as in the simulation
+    else
+        spacing = app.GratingPeriodEditField.Value;
+        n = app.RefIndexEditField.Value;
+        to_c =app.ThermoOpticEditField.Value;  
+        a_f = app.ThermalCoeffEditField.Value;    
+    end
+    braggWavelength = getBraggWavelength(spacing, n);   %1550 with default design
     %add wavelength shift to the graph
-    wavelengthShift =  app.peakWavelength - braggWavelength;     
+    wavelengthShift =  app.peakWavelength - braggWavelength;        %app.peakWavelength is inferred when loading in the file     
     wavelengthShiftRef = app.peakRefWavelength - braggWavelength;
     %display in the graph
     textPosition = [0.95, 0.9]; % Adjust text position as needed
@@ -36,20 +47,46 @@ function [] = simulate(app)
     volumeOfElipsoidSection = 4/3* pi *height/2 * width/2 * lengthOfElipsoidOnEnd;
     totalVolume = volumeOfCylindricalSection + volumeOfElipsoidSection;
     totalVolume = totalVolume * 1000; %conversion from m^3 to liters
-    
-    %% Calculate the height of liquid based off of a height/volume input
-    
-    %LEGACY CODE
-    %Option 1 - liquid height
-    %if(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(1)))
-    %    liquidHeight = app.ValueEditField.Value/1000;
-    %    newVolume =  getEllipsoidPartialVolume(liquidHeight, height, width, lengthOfCylindrical, lengthOfElipsoidOnEnd);
-        
-    %Option 2 - liquid volume
-    %elseif(strcmp(app.ChooseInputDropDown.Value, app.ChooseInputDropDown.Items(2)))
-    %    newVolume = app.ValueEditField.Value;
-    %end
-    
+      
+    %% Then, retrieve information back from the two spectra   
+    p11 = 0.121;             %Pockel's constant (for calculation of k_e, k_t)
+    p12 = 0.27;              %Pockel's constant
+  
+    k_e = 1 - 0.5*n^2*((1-v_f)*p12 - v_f*p11); 
+    k_t = (1 - 0.5*n^2*(p11 + 2*p12))*a_f + to_c/n;
+
+    dT = wavelengthShiftRef/(k_t*braggWavelength);
+    app.TemperatureEditField.Value = ref_T + dT;    %reference spectrum is easy
+
+   %Now, retrieve information from the strained spectrum
+   %if simple model is chosen, recovering is easy
+    if(app.AdvancedFBGmodelCheckBox.Value == false)
+        strain = (wavelengthShift - k_t*braggWavelength*dT)/(k_e*braggWavelength);
+        app.FBGStrainEditField.Value = strain;
+        app.TankstrainEditField.Value = strain;
+    %advanced model is trickier - for reference see transferMatrixMethod.m
+    else
+         L_f = 0.005;    %TODO I realized too late that this is also a parameter
+        [term0, lambdaTerm] = getLambdaTerm(E_f,E_h,G_p,G_a,r_f,r_p,b_rp,h);
+      
+       
+        %recover e_t. a_f turned back to ue/K (requirement of the function)
+        [e_t, ~] = getThermalAndMechanical(dT, 0.01, L_f, 0, term0, lambdaTerm, E_f, a_h, a_f*1e6);
+       
+        %recover e_m now
+        e_m_recovered = (wavelengthShift - (k_t*dT + k_e*e_t)*braggWavelength)/(k_e*braggWavelength);
+        app.FBGStrainEditField.Value = e_m_recovered;
+      
+        % cosh(lambdaTerm*0) = 1. Strongest component of the spectrum is at
+        % it's strongest-bonded part (in the middle). E_f converted to Pa
+        e_actual = e_m_recovered*E_f*1e9*term0/(1 - 1/cosh(lambdaTerm*L_f)); 
+        app.TankstrainEditField.Value = e_actual;
+    end
+
+
+
+     %% Calculate the height of liquid based off of a height/volume input
+       
     liquidHeight = app.ValueEditField.Value/1000;  %TODO: Height is meant to be acquired from spectral data
     newVolume =  getEllipsoidPartialVolume(liquidHeight, height, width, lengthOfCylindrical, lengthOfElipsoidOnEnd);
     
@@ -62,28 +99,11 @@ function [] = simulate(app)
        setAppToStatus(0, app); 
        errordlg('Volume levels above 100%','Volume Error');
     end
-    
     %% Calculate the mass of the liquid
     density = app.SpecificGravityEditField.Value;
     mass = density * newVolume;
     app.TotalMasskgEditField.Value = mass;
-    
-    
-    
-    %% Finally, retrieve information back from the two spectra
-    
-    %default parameters for the sensor that we install on the tank - might need
-    %updating for whatever we end up going for.
-    k_t = 0.00000966672079880952;    
-    k_e = 0.780096011500;
-    
-    dT = wavelengthShiftRef/(k_t*braggWavelength);
-    app.TemperatureEditField.Value = manufacturingTemp + dT;
-    
-    strain = (wavelengthShift - k_t*braggWavelength*dT)/(k_e*braggWavelength);
-    app.FBGStrainEditField.Value = strain;
 
-end
 
 
 

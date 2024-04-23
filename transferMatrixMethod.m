@@ -10,8 +10,8 @@ catch
 end
 if(usingApp == 1)
     if(app.AdvancedFBGmodelCheckBox.Value == true)
-        simpleMode = 0; %Are we using the complex model for strain % stress?
-        [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a] = getTermsFromTable(app);
+        simpleMode = 0; %Is code using simple or advanced mode?
+        [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, ~, ~,~, ~, ~] = getTermsFromTable(app);
         [term0, lambdaTerm] = getLambdaTerm(E_f, E_h, G_p, G_a, r_f, r_p, b_rp, h);    %only needs calling once
     end
     core_refractive = app.RefIndexEditField.Value;     %just for reference of variables
@@ -22,6 +22,7 @@ if(usingApp == 1)
     %photoelasticCoefficient = app.PeCoeffEditField.Value;
     poissonsRatio = app.PeCoeffEditField.Value;
     thermalExpansionCoefficient = app.ThermalCoeffEditField.Value;    %1/K
+    thermoOpticCoefficient = app.ThermoOpticEditField.Value;          %1/K
     strainInSection = app.StrainEditField.Value;
     dTemp = app.DTempEditField.Value;
 
@@ -36,6 +37,7 @@ else
     %here: https://link.springer.com/article/10.1007/BF02323100
     poissonsRatio = 0.17; 
     thermalExpansionCoefficient = 0.5e-6;       %1/K
+    thermoOpticCoefficient = 1.4e-5;           %1/K 
     strainInSection = 0.0005;
     dTemp = -5;
 
@@ -53,7 +55,7 @@ braggL = getBraggWavelength(gratingP, n_1);         %m
 alpha = thermalExpansionCoefficient;
 
 % other constants
-thermoOpticCoefficient = 1.4e-5;           %1/K TODO - user should be able to change
+
 p11 = 0.121;             %Pockel's constant (paper 4)
 p12 = 0.27;              %Pockel's constant
 
@@ -124,10 +126,6 @@ end
 %% Now, the strained spectrum 
 y_result_strained = zeros(1,200);
 j = 1;
-
-%TODO: Eq (6) from here https://www.mdpi.com/1424-8220/20/15/4223 
-%For measurement of the mechanical strain transferred from structure to
-%fibre
 strainTable = {};
 for currentL = currentLarray 
     %% - change induced by strain & temperature

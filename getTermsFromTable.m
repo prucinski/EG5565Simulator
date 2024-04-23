@@ -1,4 +1,4 @@
-function [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a] = getTermsFromTable(app)
+function [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, n_eff, g_period, to_c,ref_T, v_f] = getTermsFromTable(app)
     %best I could do for error detection
     try
       E_f = str2double(app.UITable.Data{1,2});
@@ -24,6 +24,18 @@ function [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a] = getTermsFromTable(a
         if(isnan(G_p)), app.UITable.Data{3,3} = {'2.02'}; error('G_p is not a number');   end
      G_a = str2double(app.UITable.Data{3,4});
         if(isnan(G_a)), app.UITable.Data{3,4} = {'0.714'}; error('G_a is not a number');   end
+
+     %HSM parameters
+     n_eff = str2double(app.UITable.Data{1,6});
+        if(isnan(n_eff)), app.UITable.Data{1,6} = {'1.47'}; error('n_eff is not a number');   end
+     g_period = str2double(app.UITable.Data{2,6});
+        if(isnan(g_period)), app.UITable.Data{2,6} = {'0.527212'}; error('g_period is not a number');   end
+     to_c = str2double(app.UITable.Data{3,6});
+        if(isnan(to_c)), app.UITable.Data{3,6} = {'14'}; error('to_c is not a number');   end
+     ref_T = str2double(app.UITable.Data{4,6});
+        if(isnan(ref_T)), app.UITable.Data{4,6} = {'20'}; error('ref_T is not a number');   end
+     v_f = str2double(app.UITable.Data{2,2});
+        if(isnan(v_f)), app.UITable.Data{2,2} = {'0.17'}; error('v_f is not a number');   end
           
     catch ME 
         errordlg("Problem with a variable in the advanced settings tab:  " + ...
@@ -38,5 +50,10 @@ function [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a] = getTermsFromTable(a
         b_rp = 0.2;         %1, gap between adhesive and fiber 
         a_h = 23;           %microe/K, coeff of thermal expansion of host
         a_f = 0.5;          %microe/K, coeff of thermal expansion of fiber
+        n_eff = 1.47;       %1, refractive index
+        g_period = 0.527212;%um, grating period
+        to_c = 14;          % ue/K, thermo-optic coefficient
+        ref_T = 20;         %deg C, reference temperature
+        v_f = 0.17;         %1, Poisson's ratio for fibre
     end
 end
