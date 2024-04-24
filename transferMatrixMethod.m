@@ -1,5 +1,6 @@
 %% Parameters
-usingApp = -1;  %#ok<NASGU>   
+usingApp = -1;  %#ok<NASGU> 
+usingApodization =  0; 
 lambdaTerm = -1; 
 simpleMode = 1;
 try %check if the script is being ran with app or without
@@ -13,6 +14,9 @@ if(usingApp == 1)
         simpleMode = 0; %Is code using simple or advanced mode?
         [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, ~, ~,~, ~, ~] = getTermsFromTable(app);
         [term0, lambdaTerm] = getLambdaTerm(E_f, E_h, G_p, G_a, r_f, r_p, b_rp, h);    %only needs calling once
+    end
+    if(app.UseapodizationfunctionCheckBox.Value == true)    %check if we're using apodization
+        usingApodization = 1;
     end
     core_refractive = app.RefIndexEditField.Value;     %just for reference of variables
     core_cladding = app.CladdingIndexEditField.Value;                               
@@ -58,7 +62,7 @@ alpha = thermalExpansionCoefficient;
 
 p11 = 0.121;             %Pockel's constant (paper 4)
 p12 = 0.27;              %Pockel's constant
-
+g = 1;                   %for apodization, gets changed if apodization is chosen
 k_e = 1 - 0.5*n_1^2*((1-v_f)*p12 - v_f*p11); 
 k_t = (1 - 0.5*n_1^2*(p11 + 2*p12))*alpha + thermoOpticCoefficient/n_1;
 
@@ -78,12 +82,17 @@ M = 2*n_1*gratingLength/braggL;
 currentLarray = linspace(braggL-1e-9,braggL+1e-9,2000);
 y_result = zeros(1,200);
 j = 1;
+
 %% reference spectrum
 for currentL = currentLarray
+    alongZaxis = 0;
     %% Equation for fiber propagation constant B and constants k and y (eq 12, paper1)
     B = 2*pi*n_1/currentL;
     dB = B - pi/gratingP;
-    k = pi*dNeff/currentL;
+    if(usingApodization)
+        g = dNeff*1/2*(1 + cos(0));    %alongZaxis = 0
+    end
+    k = g*pi*dNeff/currentL;
     y = sqrt(k^2 - dB^2);
     %% Prepare for the transfer matrix method
     N = 40;
@@ -98,7 +107,20 @@ for currentL = currentLarray
     
     T = T_i;  %begin with T_1, then multiply by T_2, then T_3... 
     for i = 2:N
+      if(usingApodization)
+        alongZaxis = alongZaxis+sectionL;
+        g = 1/2*(1 + cos(alongZaxis*pi/L));     %This entire blob of code is just for this
+        k = g*pi*dNeff/currentL;
+        y = sqrt(k^2 - dB^2);
+        T_11 = cosh(y*sectionL) - 1i*dB/y*sinh(y*sectionL);
+        T_12 = -1i*k/y*sinh(y*sectionL);
+        T_21 = 1i*k/y*sinh(y*sectionL);
+        T_22 = cosh(y*sectionL) + 1i*dB/y*sinh(y*sectionL);
+        T_i = [T_11, T_12;T_21, T_22];
+        T = T*T_i;
+      else
         T= T*T_i;
+      end
     end
     %% extract reflected & transmitted amplitude from boundary conditions
     % 4.8.3 & 4.8.4 from Fiber Bragg Gratings
@@ -137,7 +159,7 @@ for currentL = currentLarray
             if(isempty(strainTable))   
                 strainTable = readtable(app.stressPath + "\" + app.stressFile);
                 N = height(strainTable);
-                disp(N);
+                %disp(N);
             end
         end
     else
@@ -146,6 +168,7 @@ for currentL = currentLarray
     sectionL = (2/3)*L/N;
     tempstrains = zeros(N, 2);
     currentLengthFromBeginning = sectionL*N/2 - sectionL;           %for advanced mode
+    alongZaxis = 0;                                                 %
     for i = 2:N
         if(~isempty(strainTable))
            strainInSection = strainTable{i, 5};    %access the strain value 
@@ -153,17 +176,22 @@ for currentL = currentLarray
         if(simpleMode == 1)
               newN = n_1; %note - there should be a change of the effective refractive index  
               newGratingP = gratingP*(1 + k_e*strainInSection + k_t*dTemp); 
-               newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
+               newBraggL = getBraggWavelength(newGratingP, newN);
         else %we're using the complex method to infer the spectrum
             if(i <= N/2) %we only need to do half of the spectrum, past the middle point it's symmetric
               [e_t, e_m] = getThermalAndMechanical(dTemp, strainInSection, sectionL*N, currentLengthFromBeginning,term0, lambdaTerm, E_f, a_h, a_f);
               tempstrains(i,:) = [e_t, e_m];
 
               newGratingP = gratingP*(1 + k_e*(e_t + e_m) + k_t*dTemp);
+              disp(newGratingP);
                    if(i == 2)
                     newN = n_1; %note - there should be a change of the effective refractive index  
-                    newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
-                  end
+
+                   end
+                   if(i == N/2)
+                        newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
+                        newBraggL_strain = newBraggL;
+                   end
               currentLengthFromBeginning = currentLengthFromBeginning - sectionL;   %advance along
             else
               tempstrains(i,:) = tempstrains(end/2 + 1 - i + N/2,:);
@@ -172,11 +200,13 @@ for currentL = currentLarray
             end
         end
         %
-        
-        
         B = 2*pi*core_refractive/currentL; 
-        dB = B - pi/newGratingP;        
-        k = pi*dNeff/currentL;
+        dB = B - pi/newGratingP;
+        if(usingApodization)
+            alongZaxis = alongZaxis+sectionL;
+            g = 1/2*(1 + cos(alongZaxis*pi/(2/3*L)));  
+        end
+        k = g*pi*dNeff/currentL;
         y = sqrt(k^2 - dB^2);
         T_11 = cosh(y*sectionL) - 1i*dB/y*sinh(y*sectionL);
         T_12 = -1i*k/y*sinh(y*sectionL);
@@ -197,20 +227,26 @@ for currentL = currentLarray
     y_result_strained(j) = real(reflectivity)^2+ imag(reflectivity)^2;
     j= j+1;
 end
-disp(tempstrains);
-newBraggL_strain = newBraggL;   %for plotting later
+%disp(tempstrains);
+if(~simpleMode)
+    %newBraggL_strain = newBraggL;   %for plotting later
+end
 y_result_temp = zeros(1,200);
 j = 1;
 for currentL = currentLarray 
-    %% Change induced by only the temperature on the same fibre (no mechanical strain)
+    %% Change induced by only the temperature on the ref fibre (no mechanical strain)
     newGratingP = gratingP*( 1 + k_t*dTemp); 
     newN = n_1; %note - there should be a change of the effective refractive index
-    newBraggL = getBraggWavelength(newGratingP, newN);%note - this is only useful for uniform stress
+    newBraggL = getBraggWavelength(newGratingP, newN);
     B = 2*pi*core_refractive/currentL; 
-    dB = B - pi/newGratingP;        
-    k = pi*dNeff/currentL;
+    dB = B - pi/newGratingP; 
+    if(usingApodization)
+        alongZaxis = 0;
+        g = dNeff*1/2*(1 + cos(0));    %alongZaxis = 0
+    end
+    k = g*pi*dNeff/currentL;
     y = sqrt(k^2 - dB^2);
-    N = 20;
+    N = 40;
     sectionL = (1/3)*L/N;         %to distinguish between spectra, temperature spectrum will have half the length
     T_11 = cosh(y*sectionL) - 1i*dB/y*sinh(y*sectionL);
     T_12 = -1i*k/y*sinh(y*sectionL);
@@ -219,8 +255,21 @@ for currentL = currentLarray
     
     T_i = [T_11, T_12;T_21, T_22];
     T = T_i;  %begin with T_1, then multiply by T_2, then T_3... 
-    for i = 1:N
+    for i = 2:N
+      if(usingApodization)
+        alongZaxis = alongZaxis+sectionL;
+        g = 1/2*(1 + cos(alongZaxis*pi/((1/3)*L)));  
+        k = g*pi*dNeff/currentL;
+        y = sqrt(k^2 - dB^2);
+        T_11 = cosh(y*sectionL) - 1i*dB/y*sinh(y*sectionL);
+        T_12 = -1i*k/y*sinh(y*sectionL);
+        T_21 = 1i*k/y*sinh(y*sectionL);
+        T_22 = cosh(y*sectionL) + 1i*dB/y*sinh(y*sectionL);
+        T_i = [T_11, T_12;T_21, T_22];
+        T = T*T_i;
+      else
         T= T*T_i;
+      end
     end
     transmissivity = 1/T(1,1);
     reflectivity = T(2,1)/T(1,1);
@@ -233,7 +282,7 @@ if(usingApp)
     plot(app.FBGStrainedGraph, currentLarray, y_result_strained);
     plot(app.FBGStrainedGraph, currentLarray, y_result_temp);
     textPosition = [0.95, 0.9]; % Adjust text position as needed
-    text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength (temp/temp+strain): %.3f/%.3f nm', newBraggL*1e9, newBraggL_strain*1e9), ...
+    text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength (temp/temp+strain): %.2f/%.4f nm', newBraggL*1e9, newBraggL_strain*1e9), ...
         'Units', 'Normalized', 'HorizontalAlignment', 'right');
     xlim(app.FBGStrainedGraph, [currentLarray(1) currentLarray(end)]);
     ylim(app.FBGStrainedGraph, "auto");
@@ -247,6 +296,8 @@ else
     plot(currentLarray, y_result_strained);
     plot(currentLarray, y_result_temp);
 end
+
+%%
 
 
 
