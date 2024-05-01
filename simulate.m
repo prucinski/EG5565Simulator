@@ -125,6 +125,15 @@ function [] = simulate(app)
     app.StressMPaEditField.Value = stress;
     app.FactorofSafetyEditField.Value = maxStress/stress;
 
+    %% Finally, set the app to status depending on parameters.
+    if(app.FactorofSafetyEditField.Value < 1)
+        setAppToStatus(0, app);
+    elseif(app.FactorofSafetyEditField.Value < 1.2 || app.VolumeGauge.Value <75)
+        setAppToStatus(1, app);
+    else
+        setAppToStatus(2, app);
+    end
+
 
 
 
