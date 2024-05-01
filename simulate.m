@@ -123,7 +123,7 @@ function [] = simulate(app)
     stress = stress/1e6;  %convert Pa to MPa
     app.StressMPaGauge.Value = stress;
     app.StressMPaEditField.Value = stress;
-    app.FactorofSafetyEditField.Value = stress/maxStress;
+    app.FactorofSafetyEditField.Value = maxStress/stress;
 
 
 
