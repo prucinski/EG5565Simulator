@@ -3,7 +3,7 @@ function [] = maintainCloudConnection_t(key, secretID, app)
     %arg = strcat('connectToCloud("', key,'", "', secretID,'", "app")');
     t = timer('ExecutionMode', 'fixedRate', 'Period', 15, 'TimerFcn', {@(~, ~)connectToCloud(key, secretID, app)}); %every 15 seconds
     
-    t.TasksToExecute = 50;      %do it for no longer than 50 times (obviously in a real scenario this can be set to inf)
+    t.TasksToExecute = 10;      %do it for no longer than 10 times (obviously in a real scenario this can be set to inf)
     t.StartDelay = 15;
     start(t)                    %Start the task and do it 10 times
 

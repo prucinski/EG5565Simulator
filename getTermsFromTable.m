@@ -1,4 +1,4 @@
-function [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, n_eff, g_period, to_c,ref_T, v_f] = getTermsFromTable(app)
+function [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, n_eff, g_period, to_c,ref_T, v_f, L_f] = getTermsFromTable(app)
     %best I could do for error detection
     try
       E_f = str2double(app.UITable.Data{1,2});
@@ -34,8 +34,11 @@ function [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, n_eff, g_period, to_c
         if(isnan(to_c)), app.UITable.Data{3,6} = {'14'}; error('to_c is not a number');   end
      ref_T = str2double(app.UITable.Data{4,6});
         if(isnan(ref_T)), app.UITable.Data{4,6} = {'20'}; error('ref_T is not a number');   end
+     L_f = str2double(app.UITable.Data{5,6});
+        if(isnan(L_f)), app.UITable.Data{5,6} = {'0.0015'}; error('L_f is not a number');   end
      v_f = str2double(app.UITable.Data{2,2});
         if(isnan(v_f)), app.UITable.Data{2,2} = {'0.17'}; error('v_f is not a number');   end
+
           
     catch ME 
         errordlg("Problem with a variable in the advanced settings tab:  " + ...
@@ -54,6 +57,7 @@ function [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, n_eff, g_period, to_c
         g_period = 0.527212;%um, grating period
         to_c = 14;          % ue/K, thermo-optic coefficient
         ref_T = 20;         %deg C, reference temperature
+        L_f = 0.0015;        %m, total length of the fibre
         v_f = 0.17;         %1, Poisson's ratio for fibre
     end
 end

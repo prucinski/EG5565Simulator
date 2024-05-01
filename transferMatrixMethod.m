@@ -13,7 +13,7 @@ function [] = transferMatrixMethod(app)
     if(usingApp == 1)
         if(app.AdvancedFBGmodelCheckBox.Value == true)
             simpleMode = 0; %Is code using simple or advanced mode?
-            [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, ~, ~,~, ~, ~] = getTermsFromTable(app);
+            [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, ~, ~,~, ~, ~, ~] = getTermsFromTable(app);
             [term0, lambdaTerm] = getLambdaTerm(E_f, E_h, G_p, G_a, r_f, r_p, b_rp, h);    %only needs calling once
         end
         if(app.UseapodizationfunctionCheckBox.Value == true)    %check if we're using apodization
@@ -77,7 +77,7 @@ function [] = transferMatrixMethod(app)
         errordlg("Warning: number of sections is too high for the current parameters. Increase grating length","Warning");
     end
     if(n_1<n_2)
-        errordlg("Warning: Cladding index is lower than the refractive index. Please change it and run again", "Warning")'
+        errordlg("Warning: Cladding index is lower than the refractive index. Please change it and run again", "Warning");
     end
     
     %paper1: https://ijcsi.org/papers/IJCSI-9-1-2-368-374.pdf

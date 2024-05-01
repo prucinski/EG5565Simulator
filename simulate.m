@@ -17,19 +17,21 @@ function [] = simulate(app)
         lengthOfCylindrical = app.TotallLengthEditField.Value - 2*lengthOfElipsoidOnEnd;
     end
     %% Sensor design dimensions, as per the user input (defaults per our design)
-    [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, n_eff, g_period,to_c,ref_T, v_f] = getTermsFromTable(app);
+    [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, n_eff, g_period,to_c,ref_T, v_f, L_f] = getTermsFromTable(app);
     %if using custom parameters:
     if(app.CustomHSMparametersCheckBox.Value == true)
         spacing = g_period*1e-6;         %convert from um to m; 
         n = n_eff;
         to_c = to_c*1e-6;  %convert from ue/K to e/K
         a_f = a_f *1e-6;    %ue/K to e/K
+
     %otherwise, we're using the same parameters as in the simulation
     else
         spacing = app.GratingPeriodEditField.Value;
         n = app.RefIndexEditField.Value;
         to_c =app.ThermoOpticEditField.Value;  
-        a_f = app.ThermalCoeffEditField.Value;    
+        a_f = app.ThermalCoeffEditField.Value; 
+        L_f = app.GratingLengthEditField.Value;
     end
     braggWavelength = getBraggWavelength(spacing, n);   %1550 with default design
     %add wavelength shift to the graph
@@ -66,12 +68,11 @@ function [] = simulate(app)
         app.TankstrainEditField.Value = strain;
     %advanced model is trickier - for reference see transferMatrixMethod.m
     else
-         L_f = 0.005;    %TODO I realized too late that this is also a parameter
         [term0, lambdaTerm] = getLambdaTerm(E_f,E_h,G_p,G_a,r_f,r_p,b_rp,h);
       
        
         %recover e_t. a_f turned back to ue/K (requirement of the function)
-        [e_t, ~] = getThermalAndMechanical(dT, 0.01, L_f, 0, term0, lambdaTerm, E_f, a_h, a_f*1e6);
+        [e_t, ~] = getThermalAndMechanical(dT, 0.01, L_f/3, 0, term0, lambdaTerm, E_f, a_h, a_f*1e6);
        
         %recover e_f (e_m_recovered) now
         e_m_recovered = (wavelengthShift - (k_t*dT + k_e*e_t)*braggWavelength)/(k_e*braggWavelength);
@@ -79,7 +80,7 @@ function [] = simulate(app)
       
         % cosh(lambdaTerm*0) = 1. Strongest component of the spectrum is at
         % it's strongest-bonded part (in the middle). E_f converted to Pa
-        e_actual = e_m_recovered*E_f*1e9*term0/(1 - 1/cosh(lambdaTerm*L_f)); 
+        e_actual = e_m_recovered*E_f*1e9*term0/(1 - 1/cosh(lambdaTerm*2*L_f/3)); 
         app.TankstrainEditField.Value = e_actual;
     end
 
@@ -91,7 +92,7 @@ function [] = simulate(app)
     newVolume =  getEllipsoidPartialVolume(liquidHeight, height, width, lengthOfCylindrical, lengthOfElipsoidOnEnd);
     
     disp(['total volume of Tank:', num2str(totalVolume), ...
-        ', current volume of Tank', num2str(newVolume)]); %apparently it's around 23186.7 liters
+        ', current volume of Tank', num2str(newVolume)]); 
     %paste the new volume into the application
     app.VolumeGauge.Value = newVolume/totalVolume * 100;
     app.VolumelitersEditField.Value = newVolume;
