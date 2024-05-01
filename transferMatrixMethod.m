@@ -71,6 +71,14 @@ function [] = transferMatrixMethod(app)
     
     %maximum N
     M = 2*n_1*gratingLength/braggL;
+    % warning messages
+    %the maximum number of points in strain path analysis will be 47
+    if(47 > M)  
+        errordlg("Warning: number of sections is too high for the current parameters. Increase grating length","Warning");
+    end
+    if(n_1<n_2)
+        errordlg("Warning: Cladding index is lower than the refractive index. Please change it and run again", "Warning")'
+    end
     
     %paper1: https://ijcsi.org/papers/IJCSI-9-1-2-368-374.pdf
     %paper2:https://www.sciencedirect.com/science/article/pii/S235271101630022X
@@ -80,8 +88,8 @@ function [] = transferMatrixMethod(app)
     
     %% Continue on
     
-    currentLarray = linspace(braggL-1e-9,braggL+1e-9,2000);
-    y_result = zeros(1,200);
+    currentLarray = linspace(braggL-2e-9,braggL+2e-9,4000);
+    y_result = zeros(1,length(currentLarray));
     j = 1;
     
     %% reference spectrum
@@ -118,10 +126,10 @@ function [] = transferMatrixMethod(app)
         end
         %% extract reflected & transmitted amplitude from boundary conditions
         % 4.8.3 & 4.8.4 from Fiber Bragg Gratings
-        transmissivity = 1/T(1,1);
+        %transmissivity = 1/T(1,1);
         reflectivity = T(2,1)/T(1,1);
-        shouldBeOne = real(transmissivity)^2+ imag(transmissivity)^2 + real(reflectivity)^2+ imag(reflectivity)^2;  %all OK, distance from origin is 1
-        R = k^2*sinh(y*L)^2/(dB^2*sinh(y*L)^2 + k^2*cosh(y*L)^2);
+        %shouldBeOne = real(transmissivity)^2+ imag(transmissivity)^2 + real(reflectivity)^2+ imag(reflectivity)^2;  %all OK, distance from origin is 1
+        %R = k^2*sinh(y*L)^2/(dB^2*sinh(y*L)^2 + k^2*cosh(y*L)^2);
         %y_result(end+1) = R;    this has weird arifacts for some reason
         y_result(j) = real(reflectivity)^2+ imag(reflectivity)^2;
         j= j+1;
@@ -131,7 +139,7 @@ function [] = transferMatrixMethod(app)
     %% Plot the reference spectrum
     if(usingApp)
         plot(app.FBGRefGraph, currentLarray, y_result);
-        xlim(app.FBGRefGraph, [currentLarray(1) currentLarray(end)]);
+        xlim(app.FBGRefGraph, [braggL-1e-9,braggL+1e-9]);
         ylim(app.FBGRefGraph, "auto");
         textPosition = [0.95, 0.9]; % Adjust text position as needed
         text(app.FBGRefGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength: %.2f nm', braggL*1e9), 'Units', 'Normalized', 'HorizontalAlignment', 'right');
@@ -140,7 +148,7 @@ function [] = transferMatrixMethod(app)
     end
     
     %% Now, the strained spectrum 
-    y_result_strained = zeros(1,200);
+    y_result_strained = zeros(1,length(currentLarray));
     j = 1;
     strainTable = {};
     for currentL = currentLarray 
@@ -229,7 +237,7 @@ function [] = transferMatrixMethod(app)
             T= T*T_i;
 
         end
-        transmissivity = 1/T(1,1);
+        %transmissivity = 1/T(1,1);
         reflectivity = T(2,1)/T(1,1);
         y_result_strained(j) = real(reflectivity)^2+ imag(reflectivity)^2;
         j= j+1;
@@ -238,7 +246,8 @@ function [] = transferMatrixMethod(app)
     if(simpleMode)
         newBraggL_strain = newBraggL;   %for plotting later
     end
-    y_result_temp = zeros(1,200);
+    y_result_temp = zeros(1,length(currentLarray));
+    disp(length(currentLarray));
     j = 1;
     for currentL = currentLarray 
         %% Change induced by only the temperature on the ref fibre (no mechanical strain)
@@ -273,7 +282,7 @@ function [] = transferMatrixMethod(app)
             T= T*T_i;
           end
         end
-        transmissivity = 1/T(1,1);
+        %transmissivity = 1/T(1,1);
         reflectivity = T(2,1)/T(1,1);
         y_result_temp(j) = real(reflectivity)^2+ imag(reflectivity)^2;
         j= j+1;
@@ -286,7 +295,8 @@ function [] = transferMatrixMethod(app)
         textPosition = [0.95, 0.9]; % Adjust text position as needed
         text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength (temp/temp+strain): %.2f/%.4f nm', newBraggL*1e9, newBraggL_strain*1e9), ...
             'Units', 'Normalized', 'HorizontalAlignment', 'right');
-        xlim(app.FBGStrainedGraph, [currentLarray(1) currentLarray(end)]);
+        [leftLim, rightLim] = getLimits(currentLarray, y_result_strained, y_result_temp);
+        xlim(app.FBGStrainedGraph, [leftLim, rightLim]);
         ylim(app.FBGStrainedGraph, "auto");
         hold(app.FBGStrainedGraph, 'off');
         app.simulatedXResp = currentLarray;
@@ -299,13 +309,33 @@ function [] = transferMatrixMethod(app)
         plot(currentLarray, y_result_temp);
     end
 
-
+    %getting T terms
     function [T_11, T_12, T_21, T_22] = getTterms(y, k, sectionL, dB)
             T_11 = cosh(y*sectionL) - 1i*dB/y*sinh(y*sectionL);
             T_12 = -1i*k/y*sinh(y*sectionL);
             T_21 = 1i*k/y*sinh(y*sectionL);
             T_22 = cosh(y*sectionL) + 1i*dB/y*sinh(y*sectionL);
     end
+    %get limits for graphing
+    function [leftLimit, rightLimit] = getLimits(currentLarray, y_result_strained, y_result_temp)
+        strain_index = y_result_strained > 0.005;
+        temp_index = y_result_temp > 0.01;
+        filtered_x_strain = currentLarray(strain_index);
+        filtered_x_temp = currentLarray(temp_index);
+        if(length(filtered_x_strain) < 1)
+            errordlg("Warning: the strain value provided is too small/big for the programme to display the full response.");
+            leftLimit = currentLarray(1);
+            rightLimit = currentLarray(end) ;
+        elseif(length(filtered_x_temp) < 1)
+            errordlg("Warning: the temperature value provided is too small/big for the programme to display the full response.");
+            leftLimit = currentLarray(1);
+            rightLimit = currentLarray(end) ;
+        else
+            leftLimit = min(filtered_x_strain(1), filtered_x_temp(1));
+            rightLimit = max(filtered_x_strain(end), filtered_x_temp(end));
+        end
+    end
+    
 end    %%
 
     

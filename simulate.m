@@ -73,7 +73,7 @@ function [] = simulate(app)
         %recover e_t. a_f turned back to ue/K (requirement of the function)
         [e_t, ~] = getThermalAndMechanical(dT, 0.01, L_f, 0, term0, lambdaTerm, E_f, a_h, a_f*1e6);
        
-        %recover e_m now
+        %recover e_f (e_m_recovered) now
         e_m_recovered = (wavelengthShift - (k_t*dT + k_e*e_t)*braggWavelength)/(k_e*braggWavelength);
         app.FBGStrainEditField.Value = e_m_recovered;
       

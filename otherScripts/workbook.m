@@ -29,24 +29,39 @@
     %good explaination here too: https://www.mdpi.com/1424-8220/11/7/6926
 
     %% get the lambda term (paper 4, eq 4)
-    term0 = (pi*r_f^2/(2*h*r_p*E_h))+1/E_f;
-    term1 = 2*r_p/(pi*r_f^2)*term0;
-    integralFunction = @(theta)  1./(r_p.*(1-sin(theta))./G_a+r_p./G_p.*log(r_p./r_f));
-    term2 = integral(integralFunction, 0, acos(b_rp));
-    lambdaTerm = sqrt(term1*term2);
-    sectionL = 0.005;
-    x = 0;
-    x_vals = linspace(0,sectionL, 50);
-    y_res = [];
-    divisor = cosh(sectionL*lambdaTerm);
+% Define range of sectionL values
+sectionL_values = [0.005, 0.01, 0.025, 0.04, 0.06]; % Modify as needed
 
-    term_e1 = (a_h - a_f)*dT/term0;
-    for i= 1:length(x_vals)
-        term_e2 = 1 - cosh(lambdaTerm*x_vals(i))/divisor;
-        e_m = strain/(E_f*term0)*term_e2;
-        y_res(i) = e_m;
+% Initialize plot
+figure;
+hold on;
+grid on;
+
+% Loop through sectionL values
+for sectionL = sectionL_values
+    % Initialize arrays
+    x_vals = linspace(-sectionL, sectionL, 100);
+    y_res = zeros(size(x_vals));
+    
+    % Calculate divisor
+    divisor = cosh(sectionL * lambdaTerm);
+    
+    % Calculate strains
+    for i = 1:length(x_vals)
+        term_e2 = 1 - cosh(lambdaTerm * abs(x_vals(i))) / divisor;
+        e_m = strain / (E_f * term0) * term_e2;
+        y_res(i) = e_m / strain;
     end
-    plot(x_vals, y_res);
+    
+    % Plot results
+    plot(x_vals, y_res, 'DisplayName', sprintf('bondedL = %.3fm', sectionL));
+end
+
+% Add labels and legend
+xlabel('Length along the bonded fibre');
+ylabel('Normalized Strain');
+title('Normalized Strain vs length along fibre for different bonding lenghts');
+legend('Location', 'northeast');
 
 
     e_t = term_e1*term_e2 + a_f*dT;
