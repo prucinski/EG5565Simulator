@@ -94,7 +94,7 @@ function [] = transferMatrixMethod(app)
     
     %% reference spectrum
     for currentL = currentLarray
-        alongZaxis = 0;
+        alongXaxis = 0;
         %% Equation for fiber propagation constant B and constants k and y (eq 12, paper1)
         B = 2*pi*n_1/currentL;
         dB = B - pi/gratingP;
@@ -113,8 +113,8 @@ function [] = transferMatrixMethod(app)
         T = T_i;  %begin with T_1, then multiply by T_2, then T_3... 
         for i = 2:N
           if(usingApodization)
-            alongZaxis = alongZaxis+sectionL;
-            g = 1/2*(1 + cos(alongZaxis*pi/L));     %This entire blob of code is just for this
+            alongXaxis = alongXaxis+sectionL;
+            g = 1/2*(1 + cos(alongXaxis*pi/L));     %This entire blob of code is just for this
             k = g*pi*dNeff/currentL;
             y = sqrt(k^2 - dB^2);
             [T_11, T_12, T_21, T_22] = getTterms(y, k, sectionL, dB);
@@ -170,7 +170,7 @@ function [] = transferMatrixMethod(app)
         
         %Move on to preparation for TMM
         sectionL = (2/3)*L/N;
-        alongZaxis = 0;                            %for  apodization 
+        alongXaxis = 0;                            %for  apodization 
         if(~isempty(strainTable))
            strainInSection = strainTable{1, 5};    %access the strain value 
         end 
@@ -189,7 +189,7 @@ function [] = transferMatrixMethod(app)
         B = 2*pi*core_refractive/currentL; 
         dB = B - pi/newGratingP; 
         if(usingApodization)
-            alongZaxis = 0;
+            alongXaxis = 0;
             g = dNeff*1/2*(1 + cos(0));    %alongZaxis = 0
         end
         k = g*pi*dNeff/currentL;
@@ -226,8 +226,8 @@ function [] = transferMatrixMethod(app)
             B = 2*pi*core_refractive/currentL; 
             dB = B - pi/newGratingP;
             if(usingApodization)
-                alongZaxis = alongZaxis+sectionL;
-                g = 1/2*(1 + cos(alongZaxis*pi/(2/3*L)));  
+                alongXaxis = alongXaxis+sectionL;
+                g = 1/2*(1 + cos(alongXaxis*pi/(2/3*L)));  
             end
             k = g*pi*dNeff/currentL;
             y = sqrt(k^2 - dB^2);
@@ -257,7 +257,7 @@ function [] = transferMatrixMethod(app)
         B = 2*pi*core_refractive/currentL; 
         dB = B - pi/newGratingP; 
         if(usingApodization)
-            alongZaxis = 0;
+            alongXaxis = 0;
             g = dNeff*1/2*(1 + cos(0));    %alongZaxis = 0
         end
         k = g*pi*dNeff/currentL;
@@ -271,8 +271,8 @@ function [] = transferMatrixMethod(app)
        
         for i = 2:N
           if(usingApodization)
-            alongZaxis = alongZaxis+sectionL;
-            g = 1/2*(1 + cos(alongZaxis*pi/((1/3)*L)));  
+            alongXaxis = alongXaxis+sectionL;
+            g = 1/2*(1 + cos(alongXaxis*pi/((1/3)*L)));  
             k = g*pi*dNeff/currentL;
             y = sqrt(k^2 - dB^2);
             [T_11, T_12, T_21, T_22] = getTterms(y, k, sectionL, dB);
