@@ -9,12 +9,14 @@ function [] = simulate(app)
         width = 2.4;
         lengthOfElipsoidOnEnd = 1.05;
         lengthOfCylindrical =6.058 - 2*lengthOfElipsoidOnEnd;
+        maxStress = 200;
     %custom tank
     else
         height = app.HeightEditField.Value;
         width = app.WidthEditField.Value;
         lengthOfElipsoidOnEnd = app.EllipsoidEndRadiusEditField.Value;
         lengthOfCylindrical = app.TotallLengthEditField.Value - 2*lengthOfElipsoidOnEnd;
+        maxStress = app.MaxStressEditField.Value;
     end
     %% Sensor design dimensions, as per the user input (defaults per our design)
     [E_f, E_h, r_f, r_p, b_rp, h, a_f, a_h, G_p, G_a, n_eff, g_period,to_c,ref_T, v_f, L_f] = getTermsFromTable(app);
@@ -82,13 +84,22 @@ function [] = simulate(app)
         % it's strongest-bonded part (in the middle). E_f converted to Pa
         e_actual = e_m_recovered*E_f*1e9*term0/(1 - 1/cosh(lambdaTerm*2*L_f/3)); 
         app.TankstrainEditField.Value = e_actual;
+        strain = e_actual;
     end
 
 
 
-     %% Calculate the height of liquid based off of a height/volume input
-       
-    liquidHeight = app.ValueEditField.Value/1000;  %TODO: Height is meant to be acquired from spectral data
+    %% Calculate the height of liquid based off of strain recovered
+    % as per data provided by the Mechanical team   
+    a = 6.5414e3;
+    b = -0.0460;
+    ratio = app.SpecificGravityEditField.Value/1.025;
+
+    liquidHeight = ratio*(a*strain + b);
+    if(liquidHeight > height)
+        errordlg(["Warning: current strain readings indicate the liquid levels are above 100%, showing a height of", num2str(liquidHeight)], "Warning");
+        liquidHeight = height;
+    end
     newVolume =  getEllipsoidPartialVolume(liquidHeight, height, width, lengthOfCylindrical, lengthOfElipsoidOnEnd);
     
     disp(['total volume of Tank:', num2str(totalVolume), ...
@@ -104,6 +115,16 @@ function [] = simulate(app)
     density = app.SpecificGravityEditField.Value;
     mass = density * newVolume;
     app.TotalMasskgEditField.Value = mass;
+
+    %% Calculate maximum stress experienced by tank and FoS
+    m = 799777027673.439;
+    c = 13499481.179;
+    stress = m*strain + c;
+    stress = stress/1e6;  %convert Pa to MPa
+    app.StressMPaGauge.Value = stress;
+    app.StressMPaEditField.Value = stress;
+    app.FactorofSafetyEditField.Value = stress/maxStress;
+
 
 
 
