@@ -180,6 +180,7 @@ function [] = transferMatrixMethod(app)
         else %first point, advanced
             tempstrains = zeros(N, 2);                           %Initiate array for all strains (advanced mode)
             currentLengthFromBeginning = sectionL*N/2;           %for advanced mode
+            %disp(currentLengthFromBeginning);
             [e_t, e_m] = getThermalAndMechanical(dTemp, strainInSection, sectionL*N, currentLengthFromBeginning,term0, lambdaTerm, E_f, a_h, a_f);
             tempstrains(i,:) = [e_t, e_m];
             newGratingP = gratingP*(1 + k_e*(e_t + e_m) + k_t*dTemp);
@@ -242,7 +243,7 @@ function [] = transferMatrixMethod(app)
         y_result_strained(j) = real(reflectivity)^2+ imag(reflectivity)^2;
         j= j+1;
     end
-    %disp(tempstrains);
+    disp(tempstrains(N/2,2));
     if(simpleMode)
         newBraggL_strain = newBraggL;   %for plotting later
     end
@@ -296,7 +297,7 @@ function [] = transferMatrixMethod(app)
         text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength (temp/temp+strain): %.2f/%.2f nm', newBraggL*1e9, newBraggL_strain*1e9), ...
             'Units', 'Normalized', 'HorizontalAlignment', 'right');
         [leftLim, rightLim] = getLimits(currentLarray, y_result_strained, y_result_temp);
-        disp((braggL -newBraggL)*1e9);      %This is pretty much how I evaluated strain & temp for advanced model
+        %disp((braggL -newBraggL)*1e9);      %This is pretty much how I evaluated strain & temp for advanced model
         disp((braggL -newBraggL_strain)*1e9);
         xlim(app.FBGStrainedGraph, [leftLim, rightLim]);
         ylim(app.FBGStrainedGraph, "auto");

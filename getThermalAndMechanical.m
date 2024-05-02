@@ -3,7 +3,7 @@
 % will assume m
 function [e_t, e_m] = getThermalAndMechanical(dT, strain, fiberL, sectionL, term0, lambdaTerm, E_f, a_h, a_f) 
 
-    L_f = 0.5*fiberL;   %ms, half the bonding length (length of bonded fibre)
+    L_f = fiberL;   % bonding length
     x = sectionL;   %convert to micrometers, section length
     %x = 0;
 
