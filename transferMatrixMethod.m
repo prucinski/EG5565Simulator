@@ -243,7 +243,7 @@ function [] = transferMatrixMethod(app)
         y_result_strained(j) = real(reflectivity)^2+ imag(reflectivity)^2;
         j= j+1;
     end
-    disp(tempstrains(N/2,2));
+    %disp(tempstrains(N/2,2));
     if(simpleMode)
         newBraggL_strain = newBraggL;   %for plotting later
     end
