@@ -68,7 +68,7 @@ function [] = transferMatrixMethod(app)
     k_t = (1 - 0.5*n_1^2*(p11 + 2*p12))*alpha + thermoOpticCoefficient/n_1;
     
     disp(['K_e: ', sprintf('%.12f', k_e), ' k_t: ', sprintf('%.20f', k_t)]);
-    
+    %disp(k_t*braggL*dTemp*10e8);
     %maximum N
     M = 2*n_1*gratingLength/braggL;
     % warning messages
@@ -247,7 +247,7 @@ function [] = transferMatrixMethod(app)
         newBraggL_strain = newBraggL;   %for plotting later
     end
     y_result_temp = zeros(1,length(currentLarray));
-    disp(length(currentLarray));
+    %disp(length(currentLarray));
     j = 1;
     for currentL = currentLarray 
         %% Change induced by only the temperature on the ref fibre (no mechanical strain)
@@ -293,9 +293,11 @@ function [] = transferMatrixMethod(app)
         plot(app.FBGStrainedGraph, currentLarray, y_result_strained);
         plot(app.FBGStrainedGraph, currentLarray, y_result_temp);
         textPosition = [0.95, 0.9]; % Adjust text position as needed
-        text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength (temp/temp+strain): %.2f/%.4f nm', newBraggL*1e9, newBraggL_strain*1e9), ...
+        text(app.FBGStrainedGraph, textPosition(1), textPosition(2), sprintf('Bragg wavelength (temp/temp+strain): %.2f/%.2f nm', newBraggL*1e9, newBraggL_strain*1e9), ...
             'Units', 'Normalized', 'HorizontalAlignment', 'right');
         [leftLim, rightLim] = getLimits(currentLarray, y_result_strained, y_result_temp);
+        disp((braggL -newBraggL)*1e9);      %This is pretty much how I evaluated strain & temp for advanced model
+        disp((braggL -newBraggL_strain)*1e9);
         xlim(app.FBGStrainedGraph, [leftLim, rightLim]);
         ylim(app.FBGStrainedGraph, "auto");
         hold(app.FBGStrainedGraph, 'off');
