@@ -21,7 +21,7 @@ function [e_t, e_m] = getThermalAndMechanical(dT, strain, fiberL, sectionL, term
     term_e1 = (a_h - a_f)*dT/(E_f*term0);
     term_e2 = (1 - (cosh(lambdaTerm*x))/(cosh(lambdaTerm*L_f)));
     e_t = term_e1*term_e2 + a_f*dT;
-
+    disp(e_t);
     %% get mechanical strain
     e_m = strain/(E_f*term0)*term_e2;
     %disp("Strain transferred " + e_m);
