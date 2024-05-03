@@ -97,8 +97,8 @@ function [] = simulate(app)
     ratio = app.SpecificGravityEditField.Value/1.025;
 
     liquidHeight = ratio*(a*strain + b);
-    disp(liquidHeight);
-    disp(height);
+    %disp(liquidHeight);
+    %disp(height);
     if(liquidHeight > height)
         errordlg(["Warning: current strain readings indicate the liquid levels are above 100%, showing a height of", num2str(liquidHeight)], "Warning");
         liquidHeight = height;
@@ -106,11 +106,11 @@ function [] = simulate(app)
         errordlg(["Warning: current strain readings indicate the liquid levels are below 0%, showing a height of", num2str(liquidHeight)], "Warning");
         liquidHeight = 0;
     end
-    disp(liquidHeight);
+    %disp(liquidHeight);
     newVolume =  getEllipsoidPartialVolume(liquidHeight, height, width, lengthOfCylindrical, lengthOfElipsoidOnEnd);
     
-    disp(['total volume of Tank:', num2str(totalVolume), ...
-        ', current volume of Tank', num2str(newVolume)]); 
+    %disp(['total volume of Tank:', num2str(totalVolume), ...
+    %    ', current volume of Tank', num2str(newVolume)]); 
     %paste the new volume into the application
     app.VolumeGauge.Value = newVolume/totalVolume * 100;
     app.VolumelitersEditField.Value = newVolume;
