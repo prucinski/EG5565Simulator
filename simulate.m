@@ -4,12 +4,12 @@ function [] = simulate(app)
     setAppToStatus(-1, app);
     %% Tank dimensions, as per mechanical team, in meters
     %default tank
-    if(app.NewTankCheckBox == false)  
+    if(app.NewTankCheckBox.Value == false)  
         height = 2.6;
         width = 2.4;
         lengthOfElipsoidOnEnd = 1.05;
         lengthOfCylindrical =6.058 - 2*lengthOfElipsoidOnEnd;
-        maxStress = 200;
+        maxStress = 250;
     %custom tank
     else
         height = app.HeightEditField.Value;
@@ -92,12 +92,12 @@ function [] = simulate(app)
 
     %% Calculate the height of liquid based off of strain recovered
     % as per data provided by the Mechanical team   
-    a = 6.5414e3;
-    b = -0.0460;
-    ratio = app.SpecificGravityEditField.Value/1.025;
+    a = 5474.2;
+    b = -0.0118;
+    ratio = 1.2248/app.SpecificGravityEditField.Value;
 
     liquidHeight = ratio*(a*strain + b);
-    %disp(liquidHeight);
+    disp(liquidHeight);
     %disp(height);
     if(liquidHeight > height)
         errordlg(["Warning: current strain readings indicate the liquid levels are above 100%, showing a height of", num2str(liquidHeight)], "Warning");
@@ -124,8 +124,12 @@ function [] = simulate(app)
     app.TotalMasskgEditField.Value = mass;
 
     %% Calculate maximum stress experienced by tank and FoS
-    m = 799777027673.439;
-    c = 13499481.179;
+    %m = 799777027673.439;
+    %c = 13499481.179;
+    %m = 208438100101.770; stackk
+    %c = 10655628.285;
+    m = 6.08170824445238e11;
+    c = 1283290.869;
     stress = m*strain + c;
     stress = stress/1e6;  %convert Pa to MPa
     app.StressMPaGauge.Value = stress;
@@ -135,7 +139,7 @@ function [] = simulate(app)
     %% Finally, set the app to status depending on parameters.
     if(app.FactorofSafetyEditField.Value < 1)
         setAppToStatus(0, app);
-    elseif(app.FactorofSafetyEditField.Value < 1.5 || app.VolumeGauge.Value <75)
+    elseif(app.FactorofSafetyEditField.Value < 1.2 || app.VolumeGauge.Value <75)
         setAppToStatus(1, app);
     else
         setAppToStatus(2, app);
