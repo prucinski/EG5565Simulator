@@ -161,6 +161,7 @@ function [] = transferMatrixMethod(app)
                 if(isempty(strainTable))   
                     strainTable = readtable(app.stressPath + "\" + app.stressFile);
                     N = height(strainTable);
+                    strains = strainTable{:, end};  %putting into array for faster access
                     %disp(N);
                 end
             end
@@ -172,7 +173,7 @@ function [] = transferMatrixMethod(app)
         sectionL = (2/3)*L/N;
         alongXaxis = 0;                            %for  apodization 
         if(~isempty(strainTable))
-           strainInSection = strainTable{1, 5};    %access the strain value 
+           strainInSection = strains(1);    %access the strain value 
         end 
         newN = n_1; %note - there should be a change of the effective refractive index  
         if(simpleMode == 1)
@@ -201,7 +202,7 @@ function [] = transferMatrixMethod(app)
     
         for i = 2:N
             if(~isempty(strainTable))
-               strainInSection = strainTable{i, 5};    %access the strain value 
+               strainInSection = strains(i);    %access the strain value 
             end    
             if(simpleMode == 1)
                   newN = n_1; %note - there should be a change of the effective refractive index  

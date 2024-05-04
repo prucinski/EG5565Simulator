@@ -124,12 +124,14 @@ function [] = simulate(app)
     app.TotalMasskgEditField.Value = mass;
 
     %% Calculate maximum stress experienced by tank and FoS
-    %m = 799777027673.439;
-    %c = 13499481.179;
-    %m = 208438100101.770; stackk
-    %c = 10655628.285;
-    m = 6.08170824445238e11;
-    c = 1283290.869;
+    %see if stacked or not to see which formula to use
+    %if(app.TankstackingCheckBox.Value == true)
+    %    m = 799777027673.439;
+    %    c = 13499481.179;
+    %else %not stacked
+        m = 608170824445.238;
+        c = 1283290.86918642;
+    %end
     stress = m*strain + c;
     stress = stress/1e6;  %convert Pa to MPa
     app.StressMPaGauge.Value = stress;
